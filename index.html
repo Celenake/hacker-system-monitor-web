@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🖥️ Hacker System Monitor</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== MATRIX RAIN BACKGROUND ===== */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* ===== MAIN CARD ===== */
+        .container {
+            position: relative;
+            z-index: 1;
+            background: rgba(10, 10, 10, 0.92);
+            border: 2px solid #00ff41;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 0 60px rgba(0, 255, 65, 0.15),
+                        0 0 120px rgba(0, 255, 65, 0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #00ff41;
+            font-size: 28px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        .header .subtitle {
+            color: #00cc33;
+            font-size: 14px;
+            letter-spacing: 6px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .glitch-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff41, transparent);
+            margin: 15px 0;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* ===== SYSTEM INFO GRID ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            background: rgba(0, 255, 65, 0.03);
+            border: 1px solid rgba(0, 255, 65, 0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background: rgba(0, 255, 65, 0.08);
+            border-color: #00ff41;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.05);
+        }
+
+        .info-item .label {
+            color: #00cc33;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
+        }
+
+        .info-item .value {
+            color: #00ff41;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+
+        /* ===== HACKER STATUS ===== */
+        .status-section {
+            background: rgba(0, 255, 65, 0.03);
+            border: 1px solid rgba(0, 255, 65, 0.08);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 15px 0;
+        }
+
+        .status-line {
+            color: #00ff41;
+            font-size: 14px;
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-line .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .status-line .green {
+            color: #00ff41;
+        }
+        .status-line .red {
+            color: #ff0040;
+        }
+        .status-line .yellow {
+            color: #ffcc00;
+        }
+        .status-line .dim {
+            opacity: 0.5;
+        }
+
+        .hacker-quote {
+            color: #00cc33;
+            font-size: 13px;
+            font-style: italic;
+            opacity: 0.7;
+            text-align: center;
+            margin: 10px 0 0 0;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-section {
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 255, 65, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 65, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff41, #00cc33);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .progress-label {
+            color: #00cc33;
+            font-size: 12px;
+            opacity: 0.6;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #006622;
+            font-size: 12px;
+            letter-spacing: 2px;
+            opacity: 0.4;
+        }
+
+        .footer span {
+            animation: blink 2s step-end infinite;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .header h1 { font-size: 20px; letter-spacing: 2px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .info-item .value { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== MATRIX RAIN CANVAS ===== -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- ===== MAIN CONTAINER ===== -->
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🖥️ SYSTEM MONITOR</h1>
+            <div class="subtitle">✦ HACKER EDITION ✦</div>
+            <div class="glitch-line"></div>
+        </div>
+
+        <!-- SYSTEM INFO -->
+        <div class="info-grid" id="info-grid">
+            <div class="info-item">
+                <div class="label">💻 Operating System</div>
+                <div class="value" id="os">Loading...</div>
+            </div>
+            <div class="info-item">
+                <div class="label">🏷️ Hostname</div>
+                <div class="value" id="hostname">Loading...</div>
+            </div>
+            <div class="info-item">
+                <div class="label">⚙️ Architecture</div>
+                <div class="value" id="arch">Loading...</div>
+            </div>
+            <div class="info-item">
+                <div class="label">🐍 Python Version</div>
+                <div class="value" id="python">Loading...</div>
+            </div>
+            <div class="info-item">
+                <div class="label">🕒 System Time</div>
+                <div class="value" id="time">Loading...</div>
+            </div>
+            <div class="info-item">
+                <div class="label">📅 System Date</div>
+                <div class="value" id="date">Loading...</div>
+            </div>
+        </div>
+
+        <!-- STATUS -->
+        <div class="status-section" id="status-section">
+            <div class="status-line">
+                <span class="green blink">⏺</span>
+                <span class="green">INITIALIZING HACK SEQUENCE...</span>
+            </div>
+            <div class="status-line dim" id="scan-line">[>] Scanning IP: 192.168.1.42</div>
+            <div class="status-line dim" id="result-line">[!] TARGET SECURE. NO HACKING DETECTED.</div>
+            <div class="status-line green">[✓] SYSTEM IS SAFE! (For now...)</div>
+            <div class="hacker-quote">"I'm not a hacker, I'm a security enthusiast."</div>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-section">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-label">
+                <span>🔒 Monitoring</span>
+                <span id="progress-text">0%</span>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <span>⬛</span> SYSTEM SECURE <span>⬛</span>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  1. MATRIX RAIN ANIMATION
+        // ============================================================
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '0123456789ABCDEF';
+        const charArray = chars.split('');
+        const columns = Math.floor(canvas.width / 16);
+        const drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff41';
+            ctx.font = '16px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(char, i * 16, drops[i] * 18);
+
+                if (drops[i] * 18 > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        // Throttle matrix animation for performance
+        let matrixInterval = setInterval(drawMatrix, 50);
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // ============================================================
+        //  2. GET SYSTEM INFO (via User-Agent + fallbacks)
+        // ============================================================
+        function getSystemInfo() {
+            const ua = navigator.userAgent;
+            let os = 'Unknown';
+            let arch = navigator.platform || 'Unknown';
+
+            if (ua.includes('Windows')) os = 'Windows';
+            else if (ua.includes('Mac')) os = 'macOS';
+            else if (ua.includes('Linux')) os = 'Linux';
+            else if (ua.includes('Android')) os = 'Android';
+            else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+            // Get hostname from browser (limited)
+            let hostname = window.location.hostname || 'localhost';
+            if (hostname === '' || hostname === '0.0.0.0' || hostname === '127.0.0.1') {
+                hostname = 'local-device';
+            }
+
+            return {
+                os: os,
+                hostname: hostname,
+                arch: arch,
+                python: 'N/A (Browser)',
+                time: new Date().toLocaleTimeString(),
+                date: new Date().toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })
+            };
+        }
+
+        // ============================================================
+        //  3. UPDATE UI
+        // ============================================================
+        function updateInfo() {
+            const info = getSystemInfo();
+
+            document.getElementById('os').textContent = info.os;
+            document.getElementById('hostname').textContent = info.hostname;
+            document.getElementById('arch').textContent = info.arch;
+            document.getElementById('python').textContent = info.python;
+            document.getElementById('time').textContent = info.time;
+            document.getElementById('date').textContent = info.date;
+        }
+
+        // ============================================================
+        //  4. HACKER SEQUENCE ANIMATION
+        // ============================================================
+        function runHackerSequence() {
+            const scanLine = document.getElementById('scan-line');
+            const resultLine = document.getElementById('result-line');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+
+            const ips = [
+                '192.168.1.42',
+                '192.168.1.73',
+                '192.168.1.99',
+                '10.0.0.15',
+                '172.16.0.1'
+            ];
+
+            let step = 0;
+
+            function nextStep() {
+                if (step < ips.length) {
+                    scanLine.textContent = `[>] Scanning IP: ${ips[step]}`;
+                    scanLine.style.opacity = '1';
+                    const progress = Math.round(((step + 1) / ips.length) * 100);
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = progress + '%';
+                    step++;
+                    setTimeout(nextStep, 400);
+                } else {
+                    resultLine.textContent = '[!] TARGET SECURE. NO HACKING DETECTED.';
+                    resultLine.style.opacity = '1';
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '100%';
+                    setTimeout(() => {
+                        resultLine.textContent = '[✓] SYSTEM IS SAFE! (For now...)';
+                        resultLine.className = 'status-line green';
+                    }, 800);
+                }
+            }
+
+            setTimeout(nextStep, 300);
+        }
+
+        // ============================================================
+        //  5. QUOTE ROTATOR
+        // ============================================================
+        const quotes = [
+            '"I\'m not a hacker, I\'m a security enthusiast."',
+            '"The only secure system is one that is turned off."',
+                            '"Hack the planet! ...Or just your terminal."',
+            '"With great power comes great electricity bill."',
+            '"I don\'t always hack, but when I do, I use Python."',
+            '"Debugging: removing the needles from the haystack."'
+        ];
+
+        function rotateQuote() {
+            const quoteEl = document.querySelector('.hacker-quote');
+            const current = quoteEl.textContent;
+            let next = current;
+            while (next === current) {
+                next = quotes[Math.floor(Math.random() * quotes.length)];
+            }
+            quoteEl.textContent = next;
+        }
+
+        // ============================================================
+        //  6. TIME UPDATER
+        // ============================================================
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString();
+        }
+
+        // ============================================================
+        //  7. INIT
+        // ============================================================
+        updateInfo();
+        runHackerSequence();
+
+        // Update time every second
+        setInterval(updateTime, 1000);
+
+        // Rotate quote every 10 seconds
+        setInterval(rotateQuote, 10000);
+
+        // Update full info every 60 seconds
+        setInterval(updateInfo, 60000);
+
+        // ============================================================
+        //  8. KEYBOARD EASTER EGG
+        // ============================================================
+        let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let konamiIndex = 0;
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (key === konamiCode[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    document.body.style.background = '#00ff4111';
+                    document.querySelector('.container').style.borderColor = '#ffcc00';
+                    document.querySelector('.container').style.boxShadow = '0 0 80px rgba(255, 204, 0, 0.2)';
+                    document.querySelector('.hacker-quote').textContent = '🎮 KONAMI CODE ACTIVATED! YOU WIN! 🎮';
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
+            }
+        });
+
+        console.log('🖥️ Hacker System Monitor loaded successfully!');
+        console.log('💡 Tip: Try typing the Konami code! ↑↑↓↓←→←→ ba');
+    </script>
+</body>
+</html>
