@@ -22,7 +22,4 @@ Type the Konami code: **↑ ↑ ↓ ↓ ← → ← → b a**
 ## 🤓 Why I Built This
 Because I wanted to feel like a hacker without actually hacking anything.
 
-## 📝 License
-MIT – Do whatever you want with it!
-
 ## ⭐ Star this repo if you like it!
